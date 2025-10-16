@@ -54,4 +54,19 @@ public function getCoefAttribute($value)
         return $this->belongsTo(Metier::class);
     }
 
+
+    public function formateurs()
+    {
+        return $this->belongsToMany(User::class, 'classe_formateur_matiere', 'matiere_id', 'formateur_id')
+                    ->withPivot('classe_id')
+                    ->withTimestamps();
+    }
+    
+    public function classes()
+    {
+        return $this->belongsToMany(Classe::class, 'classe_formateur_matiere', 'matiere_id', 'classe_id')
+                    ->withPivot('formateur_id')
+                    ->withTimestamps();
+    }
+
 }

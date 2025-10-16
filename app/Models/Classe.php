@@ -86,6 +86,13 @@ public function formateurs()
         ->withPivot('role')
         ->withTimestamps();
     }
-    
+
+ 
+public function matieres()
+{
+    return $this->belongsToMany(Matiere::class, 'classe_formateur_matiere', 'classe_id', 'matiere_id')
+                ->withPivot('formateur_id')
+                ->withTimestamps();
+}
 
 }

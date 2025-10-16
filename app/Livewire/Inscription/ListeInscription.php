@@ -77,9 +77,24 @@ class ListeInscription extends Component
         $this->selectedApprenant = session()->get('selectedApprenant');
         $this->currentApprenant = null;
 
-        $this->matieres = $this->currentClasse
-            ? Matiere::where('niveau_etude_id', $this->currentClasse->niveau_etude->id)->get()
-            : [];
+        if ($this->currentClasse) {
+            $user = auth()->user();
+            if ($user->hasRole('formateur')) {
+                $this->matieres = \Illuminate\Support\Facades\DB::table('classe_formateur_matiere')
+                    ->join('matieres', 'classe_formateur_matiere.matiere_id', '=', 'matieres.id')
+                    ->where('classe_formateur_matiere.classe_id', $this->currentClasse->id)
+                    ->where('classe_formateur_matiere.formateur_id', $user->id)
+                    ->select('matieres.id', 'matieres.nom', 'matieres.coef')
+                    ->get();
+            } else {
+                $this->matieres = Matiere::where('niveau_etude_id', $this->currentClasse->niveau_etude->id)
+                    ->select('id', 'nom', 'coef')
+                    ->get();
+            }
+        } else {
+            $this->matieres = [];
+        }
+        
 
         $this->fill([
             'search' => '',
@@ -96,9 +111,24 @@ class ListeInscription extends Component
         session()->put('currentClasse', $this->classe);
 
         $this->currentClasse = Classe::with('formateurs')->find($this->classe);
-        $this->matieres = $this->currentClasse
-            ? Matiere::where('niveau_etude_id', $this->currentClasse->niveau_etude->id)->get()
-            : [];
+        if ($this->currentClasse) {
+            $user = auth()->user();
+            if ($user->hasRole('formateur')) {
+                $this->matieres = \Illuminate\Support\Facades\DB::table('classe_formateur_matiere')
+                    ->join('matieres', 'classe_formateur_matiere.matiere_id', '=', 'matieres.id')
+                    ->where('classe_formateur_matiere.classe_id', $this->currentClasse->id)
+                    ->where('classe_formateur_matiere.formateur_id', $user->id)
+                    ->select('matieres.id', 'matieres.nom', 'matieres.coef')
+                    ->get();
+            } else {
+                $this->matieres = Matiere::where('niveau_etude_id', $this->currentClasse->niveau_etude->id)
+                    ->select('id', 'nom', 'coef')
+                    ->get();
+            }
+        } else {
+            $this->matieres = [];
+        }
+        
 
         $this->loadApprenants();
     }
@@ -164,8 +194,25 @@ class ListeInscription extends Component
                 }
 
                 $evalu = $qry->get();
-                $matieres = Matiere::where('niveau_etude_id', optional($inscription->classe)->niveau_etude->id)->get();
-
+                //$matieres = Matiere::where('niveau_etude_id', optional($inscription->classe)->niveau_etude->id)->get();
+                $user = auth()->user();
+                $classeId = optional($inscription->classe)->id;
+                
+                if ($user->hasRole('formateur')) {
+                    // 🧑‍🏫 Le formateur ne voit que les matières qui lui sont assignées dans la classe
+                    $matieres = \Illuminate\Support\Facades\DB::table('classe_formateur_matiere')
+                        ->join('matieres', 'classe_formateur_matiere.matiere_id', '=', 'matieres.id')
+                        ->where('classe_formateur_matiere.classe_id', $classeId)
+                        ->where('classe_formateur_matiere.formateur_id', $user->id)
+                        ->select('matieres.id', 'matieres.nom', 'matieres.coef')
+                        ->get();
+                } else {
+                    // 👑 Chef d’établissement, chef de travaux, superadmin → toutes les matières
+                    $matieres = Matiere::where('niveau_etude_id', optional($inscription->classe)->niveau_etude->id)
+                        ->select('id', 'nom', 'coef')
+                        ->get();
+                }
+                
                 foreach ($evalu as $evaluation) {
                     $evaluation->moyenne = $this->calculerMoyenne($evaluation->note_cc, $evaluation->note_composition);
                 }

@@ -21,6 +21,7 @@ use App\Enums\UserAction;
 use App\Repositories\LogUserRepository;
 use App\Models\PersonnelEtablissement;
 use App\Enums\Model;
+use Illuminate\Support\Facades\DB;
 use PDF;
 
 
@@ -139,37 +140,93 @@ class ClasseController extends Controller
     }
 
 
-      public function show(Request $request, Classe $classe)
+  
+    public function show(Request $request, Classe $classe)
     {
-        
+        // 🔹 Années académiques
         $anneeAcademiques = AnneeAcademique::orderByDesc('id')->get();
         $anneeAcademiqueId = $request->input('annee_academique_id') ?? $anneeAcademiques->first()?->id;
+    
+        // 🔹 Apprenants
         $inscriptions = Inscription::where('classe_id', $classe->id)
             ->when($anneeAcademiqueId, fn($q) => $q->where('annee_academique_id', $anneeAcademiqueId))
             ->with('apprenant')
             ->paginate(10)
-            ->appends($request->only('annee_academique_id')); // conserve le filtre à la pagination
+            ->appends($request->only('annee_academique_id'));
+    
         session()->put('currentClasse', $classe->id);
-        $classe->loadMissing('niveau_etude');
-        $matieres    = collect();
+    
+        // 🔹 Charger les infos complémentaires
+        $classe->loadMissing(['niveau_etude']);
+        $matieres = collect();
         $competences = collect();
-
+        $assignations = collect();
+    
+        // 🔹 Déterminer les matières ou compétences selon la modalité
         if ($classe->niveau_etude) {
             if ($classe->modalite === 'PPO') {
-                $matieres = Matiere::where('niveau_etude_id', $classe->niveau_etude->id)->get();
+                $matieres = Matiere::where('niveau_etude_id', $classe->niveau_etude->id)
+                    ->select('id', 'nom')
+                    ->get();
+    
+                // 🔹 Récupérer les assignations matières ↔ formateurs
+                $assignations = DB::table('classe_formateur_matiere')
+                    ->join('matieres', 'classe_formateur_matiere.matiere_id', '=', 'matieres.id')
+                    ->join('users', 'classe_formateur_matiere.formateur_id', '=', 'users.id')
+                    ->where('classe_formateur_matiere.classe_id', $classe->id)
+                    ->select(
+                        'users.nom as formateur_nom',
+                        'users.prenom as formateur_prenom',
+                        'matieres.nom as matiere_nom',
+                        'classe_formateur_matiere.formateur_id',
+                        'classe_formateur_matiere.matiere_id'
+                    )
+                    ->get();
+    
             } elseif ($classe->modalite === 'APC') {
-                $competences = Competence::where('niveau_etude_id', $classe->niveau_etude->id)->get();
+                $competences = Competence::where('niveau_etude_id', $classe->niveau_etude->id)
+                    ->select('id', 'nom')
+                    ->get();
+    
+                // 🔹 Récupérer les assignations compétences ↔ formateurs
+                $assignations = DB::table('classe_formateur_competence')
+                    ->join('competences', 'classe_formateur_competence.competence_id', '=', 'competences.id')
+                    ->join('users', 'classe_formateur_competence.formateur_id', '=', 'users.id')
+                    ->where('classe_formateur_competence.classe_id', $classe->id)
+                    ->select(
+                        'users.nom as formateur_nom',
+                        'users.prenom as formateur_prenom',
+                        'competences.nom as competence_nom',
+                        'classe_formateur_competence.formateur_id',
+                        'classe_formateur_competence.competence_id'
+                    )
+                    ->get();
             }
         }
+    
+        // 🔹 Récupérer les formateurs disponibles pour affectation
+        $formateurs = DB::table('formateur_etablissement')
+            ->join('personnel_etablissements', 'formateur_etablissement.personnel_etablissement_id', '=', 'personnel_etablissements.id')
+            ->join('users', 'personnel_etablissements.user_id', '=', 'users.id')
+            ->where('formateur_etablissement.classe_id', $classe->id)
+            ->select('users.id', 'users.nom', 'users.prenom')
+            ->distinct()
+            ->get();
+    
+        // 🔹 Formatage des apprenants
         $usersWithEnterprises = [];
         foreach ($inscriptions as $inscription) {
             $usersWithEnterprises[] = ['user' => $inscription];
         }
+    
+        // 🔹 Retour à la vue
         return view('classe.show', [
             'usersWithEnterprises'      => $usersWithEnterprises,
             'matieres'                  => $matieres,
             'competences'               => $competences,
             'classe'                    => $classe,
+            'formateurs'                => $formateurs,
+            'assignations'              => $assignations,
             'inscriptions'              => $inscriptions,
             'anneeAcademiques'          => $anneeAcademiques,
             'selectedAnneeAcademiqueId' => $anneeAcademiqueId,

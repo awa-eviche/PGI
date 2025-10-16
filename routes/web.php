@@ -53,6 +53,7 @@ use App\Http\Controllers\TypeIndicateurController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\ActualiteController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ClasseMatiereFormateurController;
 
 /*
 |--------------------------------------------------------------------------
@@ -358,3 +359,16 @@ Route::get('/classes/{classe}/formateurs/assign', [App\Http\Controllers\ClasseCo
 
 Route::post('/classes/{classe}/formateurs/assign', [App\Http\Controllers\ClasseController::class, 'storeAssign'])
     ->name('classe.formateurs.storeAssign');
+
+
+  
+   // Route::prefix('classe')->name('classe.assign.')->group(function () {
+      //  Route::post('{classe}/assignations', [ClasseMatiereFormateurController::class, 'store'])->name('store');
+    //    Route::delete('{classe}/assignations/{formateur}/{matiere}', [ClasseMatiereFormateurController::class, 'destroy'])->name('destroy');
+   // });
+
+    Route::prefix('classe')->name('classe.assign.')->group(function () {
+        Route::post('{classe}/assignations', [App\Http\Controllers\ClasseMatiereFormateurController::class, 'store'])->name('store');
+        Route::delete('{classe}/assignations/{formateur}/{id}', [App\Http\Controllers\ClasseMatiereFormateurController::class, 'destroy'])->name('destroy');
+    });
+    

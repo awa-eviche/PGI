@@ -463,4 +463,20 @@ public function countApprenantIA()
     //     return $this->workflowTools->checkAccessRights($demande, $this);
     // }
 
+
+    public function classesAssignees()
+    {
+        return $this->belongsToMany(Classe::class, 'classe_formateur_matiere', 'formateur_id', 'classe_id')
+                    ->withPivot('matiere_id')
+                    ->withTimestamps();
+    }
+    
+    public function matieresAssignees()
+    {
+        return $this->belongsToMany(Matiere::class, 'classe_formateur_matiere', 'formateur_id', 'matiere_id')
+                    ->withPivot('classe_id')
+                    ->withTimestamps();
+    }
+    
+
 }

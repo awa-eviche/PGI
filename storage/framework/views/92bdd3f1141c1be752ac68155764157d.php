@@ -1,38 +1,48 @@
-<x-app-layout>
-    <x-slot name="header">
+<?php if (isset($component)) { $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54 = $attributes; } ?>
+<?php $component = App\View\Components\AppLayout::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? (array) $attributes->getIterator() : [])); ?>
+<?php $component->withName('app-layout'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag && $constructor = (new ReflectionClass(App\View\Components\AppLayout::class))->getConstructor()): ?>
+<?php $attributes = $attributes->except(collect($constructor->getParameters())->map->getName()->all()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+     <?php $__env->slot('header', null, []); ?> 
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Informations détaillées de la classe') }}
+            <?php echo e(__('Informations détaillées de la classe')); ?>
+
         </h2>
-    </x-slot>
+     <?php $__env->endSlot(); ?>
 
     <div class="p-4">
         <div class="bg-white shadow rounded-lg p-6">
 
-            {{-- ==== En-tête principale ==== --}}
+            
             <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
                 <div>
-                    <h2 class="text-2xl font-bold">{{ $classe->libelle }}</h2>
-                    <a href="{{ route('classe.index') }}" class="text-blue-600 hover:underline text-sm">
+                    <h2 class="text-2xl font-bold"><?php echo e($classe->libelle); ?></h2>
+                    <a href="<?php echo e(route('classe.index')); ?>" class="text-blue-600 hover:underline text-sm">
                         &larr; Retour à la liste des classes
                     </a>
                 </div>
-                @php
+                <?php
     $user = auth()->user();
-@endphp
+?>
 
-@if(
+<?php if(
     $user->hasRole('chef_de_travaux') ||
     $user->hasRole('chef_etablissement') ||
     $user->hasRole('directeur_etude')
-)
-<div onclick="window.location='{{ route('classe.formateurs.assign', $classe->id) }}'"
+): ?>
+<div onclick="window.location='<?php echo e(route('classe.formateurs.assign', $classe->id)); ?>'"
      style="background-color:#0E7490; cursor: pointer; width: fit-content;"
      class="bg-cyan-700 text-white hover:bg-cyan-800 rounded-lg text-sm px-4 py-2 cursor-pointer" >  <i class="fa fa-user-plus"></i>
     Assigner des formateurs
 </div>
-@endif 
+<?php endif; ?> 
                 <div class="flex flex-wrap gap-2 mt-3 sm:mt-0">
-                    <form id="exportForm" method="GET" action="{{ route('classe.exportPdf', $classe->id) }}">
+                    <form id="exportForm" method="GET" action="<?php echo e(route('classe.exportPdf', $classe->id)); ?>">
                         <input type="hidden" name="annee_academique_id" id="annee_academique_export">
                         <button type="button" onclick="exportPdf()"
                             class="bg-blue-700 text-white text-sm px-4 py-2 rounded hover:bg-blue-800">
@@ -40,111 +50,114 @@
                         </button>
                     </form>
 
-                    @php $user = auth()->user(); @endphp
-                    @if($user->hasRole('chef_de_travaux') || $user->hasRole('chef_etablissement')||
-                    $user->hasRole('directeur_etude'))
-                        <button onclick="window.location='{{ route('classe.edit', $classe->id) }}'" style="background-color:#006D3A; cursor: pointer;"
+                    <?php $user = auth()->user(); ?>
+                    <?php if($user->hasRole('chef_de_travaux') || $user->hasRole('chef_etablissement')||
+                    $user->hasRole('directeur_etude')): ?>
+                        <button onclick="window.location='<?php echo e(route('classe.edit', $classe->id)); ?>'" style="background-color:#006D3A; cursor: pointer;"
                             class="bg-green-700 text-white text-sm px-4 py-2 rounded hover:bg-green-800 cursor-pointer">
                             Modifier
                         </button>
-                        <form action="{{ route('classe.destroy', $classe->id) }}" method="POST"
+                        <form action="<?php echo e(route('classe.destroy', $classe->id)); ?>" method="POST"
                             onsubmit="return confirm('Supprimer cette classe ?')">
-                            @csrf @method('DELETE')
+                            <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                             <button type="submit"
                                 class="bg-red-600 text-white text-sm px-4 py-2 rounded hover:bg-red-700">
                                 Supprimer
                             </button>
                         </form>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
 
-            {{-- ==== Bloc Détails de la classe ==== --}}
+            
             <div class="border border-gray-200 rounded-lg p-5 mb-8 bg-gray-50 w-full">
     <h3 class="bg-gray-100 p-2 text-md font-bold text-orange-600 mb-4">
-        Détails de la classe : {{ $classe->libelle }}
+        Détails de la classe : <?php echo e($classe->libelle); ?>
+
     </h3>
 
     <div class="flex flex-col lg:flex-row gap-8">
-        {{-- Bloc Informations générales --}}
+        
         <div class="lg:w-1/2 w-full bg-white shadow-sm rounded-md p-4 border border-gray-100">
             <h4 class="font-bold text-lg mb-3 text-gray-800 border-b pb-2">Informations générales</h4>
             <div class="grid grid-cols-2 text-sm gap-y-2">
                 <span class="text-gray-600">Établissement :</span>
-                <span class="font-semibold text-gray-900">{{ $classe->etablissement->nom }}</span>
+                <span class="font-semibold text-gray-900"><?php echo e($classe->etablissement->nom); ?></span>
 
                 <span class="text-gray-600">Filière :</span>
-                <span class="font-semibold text-gray-900">{{ $classe->niveau_etude->metier->filiere->nom }}</span>
+                <span class="font-semibold text-gray-900"><?php echo e($classe->niveau_etude->metier->filiere->nom); ?></span>
 
                 <span class="text-gray-600">Métier :</span>
-                <span class="font-semibold text-gray-900">{{ $classe->niveau_etude->metier->nom }}</span>
+                <span class="font-semibold text-gray-900"><?php echo e($classe->niveau_etude->metier->nom); ?></span>
 
                 <span class="text-gray-600">Niveau :</span>
-                <span class="font-semibold text-gray-900">{{ $classe->niveau_etude->nom }}</span>
+                <span class="font-semibold text-gray-900"><?php echo e($classe->niveau_etude->nom); ?></span>
 
                 <span class="text-gray-600">Modalité :</span>
-                <span class="font-semibold text-gray-900">{{ $classe->modalite }}</span>
+                <span class="font-semibold text-gray-900"><?php echo e($classe->modalite); ?></span>
             </div>
         </div>
 
-        {{-- Bloc Disciplines au programme --}}
+        
         <div class="lg:w-1/2 w-full bg-white shadow-sm rounded-md p-4 border border-gray-100">
             <h4 class="font-bold text-lg mb-3 text-gray-800 border-b pb-2">
-                {{ $classe->modalite === 'PPO' ? 'Matières au programme' : 'Compétences au programme' }}
+                <?php echo e($classe->modalite === 'PPO' ? 'Matières au programme' : 'Compétences au programme'); ?>
+
             </h4>
 
             <div class="text-sm grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                @if($classe->modalite === 'PPO')
-                    @forelse($matieres as $matiere)
+                <?php if($classe->modalite === 'PPO'): ?>
+                    <?php $__empty_1 = true; $__currentLoopData = $matieres; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $matiere): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <div class="flex items-center mb-1">
                             <i class="fa fa-star text-gray-400 mr-2"></i>
-                            <span><strong>{{ $matiere->code }}</strong> — {{ $matiere->nom }}</span>
+                            <span><strong><?php echo e($matiere->code); ?></strong> — <?php echo e($matiere->nom); ?></span>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <p class="text-gray-500">Aucune matière définie.</p>
-                    @endforelse
-                @elseif($classe->modalite === 'APC')
-                    @forelse($competences as $comp)
+                    <?php endif; ?>
+                <?php elseif($classe->modalite === 'APC'): ?>
+                    <?php $__empty_1 = true; $__currentLoopData = $competences; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $comp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <div class="flex items-center mb-1">
                             <i class="fa fa-check text-green-500 mr-2"></i>
-                            <span><strong>{{ $comp->code }}</strong> — {{ $comp->nom }}</span>
+                            <span><strong><?php echo e($comp->code); ?></strong> — <?php echo e($comp->nom); ?></span>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <p class="text-gray-500">Aucune compétence définie.</p>
-                    @endforelse
-                @endif
+                    <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
 
-            {{-- ==== Grille inférieure ==== --}}
+            
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            @php
+            <?php
     $user = auth()->user();
-@endphp
+?>
 
-@if(
+<?php if(
     $user->hasRole('chef_de_travaux') ||
     $user->hasRole('chef_etablissement') ||
     $user->hasRole('directeur_etude')
-)
-                {{-- === Colonne gauche : Assignations === --}}
-                @if(($classe->modalite === 'PPO' && isset($matieres)) || ($classe->modalite === 'APC' && isset($competences)))
+): ?>
+                
+                <?php if(($classe->modalite === 'PPO' && isset($matieres)) || ($classe->modalite === 'APC' && isset($competences))): ?>
                 <div class="border rounded-lg p-4 bg-white shadow-sm">
                     <div class="flex justify-between items-center mb-3">
-                    {{-- Bouton d’ouverture du formulaire d’assignation --}}
+                    
 <div id="toggleAssignationForm"
      class="bg-cyan-700 text-white hover:bg-cyan-800 rounded-lg text-sm px-4 py-2 cursor-pointer inline-flex items-center gap-2">
     <i class="fa fa-user-plus"></i>
-    {{ $classe->modalite === 'PPO' ? 'Assigner des matières aux formateurs de la classe' : 'Assigner des compétences aux formateurs de la classe' }}
+    <?php echo e($classe->modalite === 'PPO' ? 'Assigner des matières aux formateurs de la classe' : 'Assigner des compétences aux formateurs de la classe'); ?>
+
 </div>
 
                     </div>
 
-                    <form method="POST" action="{{ route('classe.assign.store', $classe->id) }}" class="mb-4">
-                        @csrf
+                    <form method="POST" action="<?php echo e(route('classe.assign.store', $classe->id)); ?>" class="mb-4">
+                        <?php echo csrf_field(); ?>
                         <div class="grid grid-cols-3 gap-3 items-end">
                         <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -153,35 +166,36 @@
     <select name="formateur_id" required
         class="w-full border-gray-300 focus:ring-first-orange focus:border-first-orange rounded-md p-2 text-sm">
         <option value="">-- Sélectionner un formateur --</option>
-        @foreach($formateurs as $f)
-            <option value="{{ $f->id }}">{{ $f->prenom }} {{ $f->nom }}</option>
-        @endforeach
+        <?php $__currentLoopData = $formateurs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $f): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <option value="<?php echo e($f->id); ?>"><?php echo e($f->prenom); ?> <?php echo e($f->nom); ?></option>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </select>
 </div>
 
 <div>
     <label class="block text-sm font-medium text-gray-700 mb-1">
-        {{ $classe->modalite === 'PPO' ? 'Choisissez une matière' : 'Choisissez une compétence' }}
+        <?php echo e($classe->modalite === 'PPO' ? 'Choisissez une matière' : 'Choisissez une compétence'); ?>
+
     </label>
 
     <select 
-        name="{{ $classe->modalite === 'PPO' ? 'matiere_id' : 'competence_id' }}" 
+        name="<?php echo e($classe->modalite === 'PPO' ? 'matiere_id' : 'competence_id'); ?>" 
         required
         class="w-full border-gray-300 focus:ring-first-orange focus:border-first-orange rounded-md p-2 text-sm"
     >
         <option value="">
-            -- {{ $classe->modalite === 'PPO' ? 'Sélectionner une matière' : 'Sélectionner une compétence' }} --
+            -- <?php echo e($classe->modalite === 'PPO' ? 'Sélectionner une matière' : 'Sélectionner une compétence'); ?> --
         </option>
 
-        @if($classe->modalite === 'PPO')
-            @foreach($matieres as $m)
-                <option value="{{ $m->id }}">{{ $m->nom }}</option>
-            @endforeach
-        @else
-            @foreach($competences as $c)
-                <option value="{{ $c->id }}">{{ $c->nom }}</option>
-            @endforeach
-        @endif
+        <?php if($classe->modalite === 'PPO'): ?>
+            <?php $__currentLoopData = $matieres; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($m->id); ?>"><?php echo e($m->nom); ?></option>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php else: ?>
+            <?php $__currentLoopData = $competences; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <option value="<?php echo e($c->id); ?>"><?php echo e($c->nom); ?></option>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        <?php endif; ?>
     </select>
 </div>
 
@@ -199,26 +213,28 @@
                             <tr>
                                 <th class="px-3 py-2 text-left">Formateur</th>
                                 <th class="px-3 py-2 text-left">
-                                    {{ $classe->modalite === 'PPO' ? 'Matière' : 'Compétence' }}
+                                    <?php echo e($classe->modalite === 'PPO' ? 'Matière' : 'Compétence'); ?>
+
                                 </th>
                                 <th class="px-3 py-2 text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($assignations as $a)
+                            <?php $__empty_1 = true; $__currentLoopData = $assignations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $a): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr class="border-b hover:bg-gray-50">
-                                    <td class="px-3 py-2">{{ $a->formateur_prenom }} {{ $a->formateur_nom }}</td>
+                                    <td class="px-3 py-2"><?php echo e($a->formateur_prenom); ?> <?php echo e($a->formateur_nom); ?></td>
                                     <td class="px-3 py-2">
-                                        {{ $classe->modalite === 'PPO' ? $a->matiere_nom : $a->competence_nom }}
+                                        <?php echo e($classe->modalite === 'PPO' ? $a->matiere_nom : $a->competence_nom); ?>
+
                                     </td>
                                     <td class="px-3 py-2 text-center">
                                         <form method="POST"
-                                              action="{{ route('classe.assign.destroy', [
+                                              action="<?php echo e(route('classe.assign.destroy', [
                                                   $classe->id,
                                                   $a->formateur_id,
                                                   $classe->modalite === 'PPO' ? $a->matiere_id : $a->competence_id
-                                              ]) }}">
-                                            @csrf @method('DELETE')
+                                              ])); ?>">
+                                            <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                                             <button type="submit"
                                                     class="text-red-600 hover:text-red-800 text-xs font-bold">
                                                 Supprimer
@@ -226,58 +242,59 @@
                                         </form>
                                     </td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr><td colspan="3" class="text-center py-2 text-gray-500">
                                     Aucune assignation enregistrée.
                                 </td></tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
-                @endif 
-                @endif
+                <?php endif; ?> 
+                <?php endif; ?>
                
 
 
-                {{-- === Colonne droite : Liste des apprenants complète === --}}
+                
                 <div class="lg:w-full border shadow p-4 rounded bg-gray-100">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="font-bold text-xl">Liste des apprenants</h3>
 
-                        <form method="GET" action="{{ route('classe.show', $classe->id) }}" class="flex items-center gap-2">
+                        <form method="GET" action="<?php echo e(route('classe.show', $classe->id)); ?>" class="flex items-center gap-2">
                             <label for="annee_academique_id" class="text-sm font-medium">Année académique :</label>
                             <select name="annee_academique_id" id="annee_academique_id" onchange="this.form.submit()"
                                     class="rounded border-gray-300 text-sm">
-                                @foreach ($anneeAcademiques as $annee)
-                                    <option value="{{ $annee->id }}" {{ request('annee_academique_id') == $annee->id ? 'selected' : '' }}>
-                                        {{ $annee->code }}
+                                <?php $__currentLoopData = $anneeAcademiques; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $annee): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($annee->id); ?>" <?php echo e(request('annee_academique_id') == $annee->id ? 'selected' : ''); ?>>
+                                        <?php echo e($annee->code); ?>
+
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </form>
                     </div>
 
                     <div class="flex items-start gap-6 mb-6">
-                        {{-- Ajouter un apprenant --}}
-                        <div onclick="window.location='{{ route('apprenant.create', $classe->id) }}'" style="background-color:#006D3A; cursor: pointer;"
+                        
+                        <div onclick="window.location='<?php echo e(route('apprenant.create', $classe->id)); ?>'" style="background-color:#006D3A; cursor: pointer;"
                              class="bg-green-700 text-white hover:bg-green-800 rounded-lg text-sm px-4 py-2 cursor-pointer">
                             Ajouter un apprenant
                         </div>
 
-                        {{-- Importer fichier Excel --}}
-                        <form action="{{ route('apprenant.import', ['classe' => $classe->id]) }}"
+                        
+                        <form action="<?php echo e(route('apprenant.import', ['classe' => $classe->id])); ?>"
                               method="POST" enctype="multipart/form-data"
                               class="flex flex-col gap-2 items-start bg-white p-4 rounded shadow w-full sm:w-full">
-                            @csrf
+                            <?php echo csrf_field(); ?>
                             <div class="flex flex-col sm:flex-row gap-4 w-full">
                                 <div class="flex flex-col w-full sm:w-1/3">
                                     <label for="annee_academique_id" class="text-sm font-medium">Année scolaire :</label>
                                     <select name="annee_academique_id" id="annee_academique_id" required
                                             class="rounded border-gray-300 text-sm w-full">
                                         <option value="">-- Choisir une année --</option>
-                                        @foreach ($anneeAcademiques as $annee)
-                                            <option value="{{ $annee->id }}">{{ $annee->code }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $anneeAcademiques; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $annee): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($annee->id); ?>"><?php echo e($annee->code); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
 
@@ -296,7 +313,7 @@
 
                     <hr class="mb-4">
 
-                    {{-- Tableau des apprenants --}}
+                    
                     <table class="w-full text-sm">
                         <thead class="bg-gray-200">
                             <tr>
@@ -307,35 +324,39 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y">
-                            @forelse ($usersWithEnterprises as $entry)
+                            <?php $__empty_1 = true; $__currentLoopData = $usersWithEnterprises; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
-                                    <td class="px-2 py-2">{{ $entry['user']->apprenant->matricule ?? '-' }}</td>
+                                    <td class="px-2 py-2"><?php echo e($entry['user']->apprenant->matricule ?? '-'); ?></td>
                                     <td class="px-2 py-2">
-                                        {{ $entry['user']->apprenant->nom ?? '-' }}
-                                        {{ $entry['user']->apprenant->prenom ?? '' }}
+                                        <?php echo e($entry['user']->apprenant->nom ?? '-'); ?>
+
+                                        <?php echo e($entry['user']->apprenant->prenom ?? ''); ?>
+
                                     </td>
                                     <td class="px-2 py-2 text-center">
-                                        {{ optional($entry['user']->apprenant)->date_naissance ? \Carbon\Carbon::parse($entry['user']->apprenant->date_naissance)->format('d-m-Y') : '-' }}
+                                        <?php echo e(optional($entry['user']->apprenant)->date_naissance ? \Carbon\Carbon::parse($entry['user']->apprenant->date_naissance)->format('d-m-Y') : '-'); ?>
+
                                     </td>
                                     <td class="px-2 py-2 text-center">
-                                        <a href="{{ route('inscription.show', $entry['user']->id) }}" class="text-green-600 hover:text-green-800">
+                                        <a href="<?php echo e(route('inscription.show', $entry['user']->id)); ?>" class="text-green-600 hover:text-green-800">
                                             <i class="fa fa-eye"></i>
                                         </a>
                                     </td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
                                     <td colspan="4" class="text-center py-4 font-semibold text-gray-500">
                                         Aucun apprenant inscrit pour cette classe.
                                     </td>
                                 </tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
 
-                    {{-- Pagination --}}
+                    
                     <div class="mt-4">
-                        {{ $inscriptions->appends(['annee_academique_id' => request('annee_academique_id')])->links() }}
+                        <?php echo e($inscriptions->appends(['annee_academique_id' => request('annee_academique_id')])->links()); ?>
+
                     </div>
                 </div>
             </div>
@@ -354,4 +375,14 @@
             document.getElementById('exportForm').submit();
         }
     </script>
-</x-app-layout>
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $attributes = $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?>
+<?php /**PATH /Applications/MAMP/htdocs/PGI-1/resources/views/classe/show.blade.php ENDPATH**/ ?>
