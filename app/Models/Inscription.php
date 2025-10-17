@@ -51,4 +51,9 @@ class Inscription extends Model
 {
     return $this->belongsTo(AnneeAcademique::class);
 }
+
+public function evaluations()
+{
+    return $this->hasMany(\App\Models\Evaluation::class, 'inscription_id', 'id');
+}
 }

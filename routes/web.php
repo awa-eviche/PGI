@@ -372,3 +372,11 @@ Route::post('/classes/{classe}/formateurs/assign', [App\Http\Controllers\ClasseC
         Route::delete('{classe}/assignations/{formateur}/{id}', [App\Http\Controllers\ClasseMatiereFormateurController::class, 'destroy'])->name('destroy');
     });
     
+
+    //Route::get('/classe/{id}/bulletins', [App\Http\Controllers\EvaluationController::class, 'downloadClassePDF'])
+   // ->name('evaluation.classe.pdf');
+
+    //Route::get('/classe/{id}/bulletins/{semestre}', [App\Http\Controllers\EvaluationController::class, 'downloadClasseBulletins'])
+   //->name('evaluation.classe.semestre.pdf');
+    Route::get('/classe/{id}/bulletins/semestre/{semestre}', [App\Http\Controllers\EvaluationController::class, 'previewClasseBulletins'])
+    ->name('evaluation.classe.preview');

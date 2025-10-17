@@ -134,6 +134,16 @@
                                    target="_blank" href="{{ route('evaluation.pdf', $currentApprenant->id) }}">
                                     <i class="fa fa-file-pdf"></i>&nbsp;Télécharger le bulletin
                                 </a>
+
+                                <a class="text-white bg-green-600 text-sm rounded-md shadow-md px-4 py-2"
+   target="_blank"
+   href="{{ route('evaluation.classe.preview', ['id' => $currentClasse->id, 'semestre' => $selectedsemestre ?? 1]) }}">
+   <i class="fa fa-print"></i>&nbsp;Telecharger tous les bulletins (Semestre {{ $selectedsemestre ?? 1 }})
+</a>
+
+
+
+
                                 @endif
                                 <div class="flex items-center justify-end">
                                     <label for="selectedsemestre" class="block text-sm font-bold text-gray-700 mr-2">Semestre :</label>

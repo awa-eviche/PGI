@@ -12,10 +12,17 @@ use Illuminate\Http\Request;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Facades\Response;
-use Barryvdh\DomPDF\Facade as PDF;
+//use Barryvdh\DomPDF\Facade as PDF;
 use App\Enums\UserAction;
 use App\Repositories\LogUserRepository;
 use App\Enums\Model;
+use App\Models\Classe;
+use Barryvdh\DomPDF\Facade\Pdf;
+use ZipArchive;
+use Illuminate\Support\Facades\File;
+
+
+//use Barryvdh\DomPDF\Facade\Pdf; // si tu utilises barryvdh/laravel-dompdf
 
 
 class EvaluationController extends Controller
@@ -396,4 +403,180 @@ $template = str_replace('[DATE]', ucfirst($date), $template);
         return "Très Bon Travail";
     }
 }
+
+
+
+
+
+
+
+public function previewClasseBulletins($classe_id, $semestre)
+{
+    $classe = Classe::with(['etablissement', 'inscriptions.apprenant'])->findOrFail($classe_id);
+    $inscriptions = $classe->inscriptions;
+
+    if ($inscriptions->isEmpty()) {
+        return back()->with('error', 'Aucun apprenant trouvé pour cette classe.');
+    }
+
+    // 🔹 Charger le modèle HTML
+    $templatePath = public_path('evaluation.html');
+    if (!file_exists($templatePath)) {
+        return back()->with('error', 'Le modèle evaluation.html est introuvable.');
+    }
+
+    $template = file_get_contents($templatePath);
+    $html = '';
+
+    /**
+     * 🧮 Étape 1 : Calcul des moyennes et rangs
+     */
+    $moyennes = [];
+
+    foreach ($inscriptions as $inscription) {
+        $evaluations = Evaluation::where('inscription_id', $inscription->id)
+            ->where('semestre', $semestre)
+            ->with('matiere')
+            ->get();
+
+        $total = 0;
+        $coefTotal = 0;
+        foreach ($evaluations as $eval) {
+            $moy = (($eval->note_cc ?? 0) + ($eval->note_composition ?? 0)) / 2;
+            $total += $moy * ($eval->matiere->coef ?? 1);
+            $coefTotal += ($eval->matiere->coef ?? 1);
+        }
+
+        $moyennes[$inscription->id] = $coefTotal > 0 ? round($total / $coefTotal, 2) : 0;
+    }
+
+    // 🔹 Moyenne de la classe
+    $moyenneClasse = count($moyennes) ? round(array_sum($moyennes) / count($moyennes), 2) : 0;
+
+    // 🔹 Rangs
+    arsort($moyennes);
+    $rangs = [];
+    $position = 1;
+    foreach ($moyennes as $id => $moy) {
+        $rangs[$id] = $position++;
+    }
+
+    /**
+     * 🧾 Étape 2 : Bulletins individuels
+     */
+    foreach ($inscriptions as $inscription) {
+        $apprenant = $inscription->apprenant;
+        $evaluations = Evaluation::where('inscription_id', $inscription->id)
+            ->where('semestre', $semestre)
+            ->with('matiere')
+            ->get();
+
+        $body = '';
+        $total = 0;
+        $coefTotal = 0;
+
+        foreach ($evaluations as $eval) {
+            $moy = (($eval->note_cc ?? 0) + ($eval->note_composition ?? 0)) / 2;
+            $total += $moy * ($eval->matiere->coef ?? 1);
+            $coefTotal += ($eval->matiere->coef ?? 1);
+
+            $body .= '
+                <tr>
+                    <td class="border-td">' . ($eval->matiere->nom ?? '-') . '</td>
+                    <td class="border-td centered">' . ($eval->matiere->coef ?? '-') . '</td>
+                    <td class="border-td centered">' . ($eval->note_cc ?? '-') . '</td>
+                    <td class="border-td centered">' . ($eval->note_composition ?? '-') . '</td>
+                    <td class="border-td centered">' . number_format($moy, 2) . '</td>
+                    <td class="border-td centered">' . $this->getAppreciation($moy) . '</td>
+                </tr>';
+        }
+
+        $moyenne = $coefTotal > 0 ? number_format($total / $coefTotal, 2) : '-';
+        $rang = $rangs[$inscription->id] ?? '-';
+
+        // Remplacement des variables dans le template
+        $content = str_replace(
+            ['[EFPT]', '[EFPTTEL]', '[CLASSE]', '[SEMESTRE]', '[ANNEESCOLAIRE]', '[USER]',
+             '[DATENAISSANCE]', '[LIEUNAISSANCE]', '[TEL]', '[EMAIL]', '[MATRICULE]',
+             '[BODY]', '[MOYENNE]', '[MOYENNE_CLASSE]', '[RANG]', '[DATE]', '[TABLE_MOYENNES]'],
+            [
+                $classe->etablissement->nom ?? '---',
+                $classe->etablissement->telephone ?? '---',
+                $classe->libelle ?? '',
+                $semestre,
+                now()->year,
+                strtoupper(($apprenant->prenom ?? '') . ' ' . ($apprenant->nom ?? '')),
+                $apprenant->date_naissance ?? '-',
+                $apprenant->lieu_naissance ?? '-',
+                $apprenant->telephone ?? '-',
+                $apprenant->email ?? '-',
+                $apprenant->matricule ?? '-',
+                $body,
+                $moyenne,
+                $moyenneClasse,
+                $rang,
+                now()->format('d/m/Y'),
+                ''
+            ],
+            $template
+        );
+
+        $html .= '<div style="page-break-after: always;">' . $content . '</div>';
+
+
+    }
+
+    /**
+     * 📊 Étape 3 : Tableau récapitulatif des moyennes
+     */
+    $html .= '
+        <h3 style="text-align:center; margin-top:30px;">Tableau Récapitulatif des Résultats - Classe : ' . e($classe->libelle) . '</h3>
+        <table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:12px;">
+            <thead>
+                <tr style="background-color:#f1f1f1; border:1px solid #000;">
+                    <th style="border:1px solid #000; padding:4px;">N°</th>
+                    <th style="border:1px solid #000; padding:4px;">Apprenant</th>
+                    <th style="border:1px solid #000; padding:4px;">Moyenne</th>
+                    <th style="border:1px solid #000; padding:4px;">Rang</th>
+                    <th style="border:1px solid #000; padding:4px;">Mention</th>
+                </tr>
+            </thead>
+            <tbody>';
+
+    $i = 1;
+    foreach ($rangs as $id => $rang) {
+        $inscription = $inscriptions->firstWhere('id', $id);
+        $apprenant = $inscription?->apprenant;
+        $html .= '
+            <tr>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">' . $i++ . '</td>
+                <td style="border:1px solid #000; padding:4px;">' . strtoupper(($apprenant->prenom ?? '') . ' ' . ($apprenant->nom ?? '')) . '</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">' . number_format($moyennes[$id], 2) . '</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">' . $rang . '</td>
+                <td style="border:1px solid #000; padding:4px; text-align:center;">' . $this->getAppreciation($moyennes[$id]) . '</td>
+            </tr>';
+    }
+
+    $html .= '
+            </tbody>
+        </table>';
+
+    // Générer le PDF dans le navigateur
+    $pdf = Pdf::loadHTML($html)->setPaper('A4', 'portrait');
+    return $pdf->stream('Bulletins_' . str_replace(' ', '_', $classe->libelle) . '_Semestre_' . $semestre . '.pdf');
+}
+
+private function getAppreciation($note)
+{
+    if ($note < 5) return "Insuffisant";
+    if ($note < 10) return "Médiocre";
+    if ($note < 12) return "Passable";
+    if ($note < 14) return "Assez Bien";
+    if ($note < 16) return "Bien";
+    if ($note < 18) return "Très Bien";
+    return "Excellent";
+}
+
+
+
 }
